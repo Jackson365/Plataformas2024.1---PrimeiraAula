@@ -49,12 +49,13 @@ public class PlayerController : MonoBehaviour
     //Replay
     private Vector3 _startPosition;
     private Quaternion _startRotation;
+    private float _startTime;
 
     private bool _isRecording;
-    private bool _isPlay;
+    private bool _isPlaying;
     private int _playHead;
 
-    private Command[] _record;
+    private Command[] _recordedCommands;
     //
     private void Start()
     {
@@ -64,6 +65,8 @@ public class PlayerController : MonoBehaviour
 
     public void RegisterJump(InputAction.CallbackContext context)
     {
+        if (_isPlaying) return;
+        
         if(!context.performed) return;
         
         _playerCommands.Push(new Jump(Time.time, _rigidbody2D, jumpForce));
@@ -75,6 +78,8 @@ public class PlayerController : MonoBehaviour
     }
     public void RegisterMovement(InputAction.CallbackContext context)
     {
+        if (_isPlaying) return;
+        
         _playerCommands.Push(new Movement(Time.time, context.ReadValue<Vector2>(), this));
         _playerCommands.Peek().Do();
         
@@ -94,6 +99,7 @@ public class PlayerController : MonoBehaviour
                 _isRecording = true;
                 _startPosition = transform.position;
                 _startRotation = transform.rotation;
+                _startTime = Time.time;
             }
             else
             {
@@ -104,16 +110,25 @@ public class PlayerController : MonoBehaviour
 
         if (Keyboard.current.pKey.isPressed)
         {
-            if (!_isPlay)
+            if (!_isPlaying)
             {
-                _isPlay = true;
-                _record = _playerCommands.ToArray();
+                _isPlaying = true;
+                _recordedCommands = _playerCommands.ToArray();
+                _playHead = 0;
+                transform.position = _startPosition;
+                transform.rotation = _startRotation;
             }
         }
 
-        if (_isPlay)
+        if (_isPlaying)
         {
-           // if(_playerCommands.[0].Time >= Time.time - ))  
+            if(_recordedCommands[_playHead].Time >= Time.time - _startTime)
+            {
+                _recordedCommands[_playHead].Do();
+                _playHead++;
+
+                if (_playHead > _recordedCommands.Length) _isPlaying = false;
+            }
         }
         //
     }
