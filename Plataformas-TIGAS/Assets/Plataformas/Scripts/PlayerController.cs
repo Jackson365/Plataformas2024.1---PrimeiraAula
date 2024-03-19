@@ -190,13 +190,16 @@ public class Move : Command
     }
     public class Coin : Command
     {
-        public Coin(float time) : base(time)
+        private Collision collision;
+        public Coin(float time, Collision coll) : base(time)
         {
+            collision = coll;
+            
         }
 
         public override void Do()
         {
-            throw new NotImplementedException();
+            collision.gameObject.SetActive(false);
         }
 
         public override void Undo()
