@@ -8,8 +8,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 //Manda o conteudo
-public class PlayerController : MonoBehaviour
-{
+//public class PlayerControllerAntigo : MonoBehaviour
+//{
     /*public int coin;
     
     // Start is called before the first frame update
@@ -34,7 +34,7 @@ public class PlayerController : MonoBehaviour
         }
         
         Debug.Log(coin);
-    }*/
+    }
 
     
     //COMMADER
@@ -50,6 +50,8 @@ public class PlayerController : MonoBehaviour
     private Vector3 _startPosition;
     private Quaternion _startRotation;
     private float _startTime;
+    private Vector2 _startVelocity;
+    private float _startPlayTime;
 
     private bool _isRecording;
     private bool _isPlaying;
@@ -90,7 +92,7 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current.rKey.isPressed)
+        if (Keyboard.current.rKey.wasPressedThisFrame)
         {
             
             //Replay
@@ -100,34 +102,36 @@ public class PlayerController : MonoBehaviour
                 _startPosition = transform.position;
                 _startRotation = transform.rotation;
                 _startTime = Time.time;
+                _startVelocity = _rigidbody2D.velocity;
             }
             else
             {
                 _isRecording = false;
             }
-            //
         }
 
-        if (Keyboard.current.pKey.isPressed)
+        if (Keyboard.current.pKey.wasPressedThisFrame)
         {
             if (!_isPlaying)
             {
                 _isPlaying = true;
                 _recordedCommands = _playerCommands.ToArray();
-                _playHead = 0;
+                _playHead = _recordedCommands.Length -1;
                 transform.position = _startPosition;
                 transform.rotation = _startRotation;
+                _rigidbody2D.velocity = _startVelocity;
+                _startPlayTime = Time.time;
             }
         }
 
         if (_isPlaying)
         {
-            if(_recordedCommands[_playHead].Time >= Time.time - _startTime)
+            if(_recordedCommands[_playHead].Time- _startTime <= Time.time - _startPlayTime)
             {
                 _recordedCommands[_playHead].Do();
-                _playHead++;
+                _playHead--;
 
-                if (_playHead > _recordedCommands.Length) _isPlaying = false;
+                if (_playHead < 0) _isPlaying = false;
             }
         }
         //
@@ -184,10 +188,10 @@ public class Movement : Command
     private Vector2 moveDirection;
     private PlayerController playerController;
     
-    public Movement(float time, Vector2 move, PlayerController play) : base(time)
+    public Movement(float time, Vector2 move, PlayerController player) : base(time)
     {
         moveDirection = move;
-        playerController = play;
+        playerController = player;
     }
 
     public override void Do()
@@ -199,4 +203,4 @@ public class Movement : Command
     {
         playerController.SetMove(moveDirection * -1);
     }
-}
+}*/
