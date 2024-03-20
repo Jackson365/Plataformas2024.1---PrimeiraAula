@@ -10,48 +10,21 @@ using UnityEngine.InputSystem;
 //Manda o conteudo
 public class PlayerController : MonoBehaviour
 {
-[SerializeField] private float moveSpeed;
+    [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce;
-
-    private Rigidbody2D _rigidbody2D;
+    
     private Vector2 _moveDirection;
 
     private Stack<Command> _playerCommands;
-
-    //Replay
-    private Vector3 _startPosition;
-    private Quaternion _startRotation;
-    private float _startTime;
-    private Vector2 _startVelocity;
-    private float _startPlayTime;
-
-    private bool _isRecording;
-    private bool _isPlaying;
-    private int _playHead;
-
     public float coin;
-
     private Command[] _recordedCommands;
     //
     private void Start()
     {
-        _rigidbody2D = GetComponent<Rigidbody2D>();
         _playerCommands = new Stack<Command>();
     }
 
-    public void RegisterJump(InputAction.CallbackContext context)
-    {
-        if (_isPlaying) return;
-        
-        if(!context.performed) return;
-        
-        _playerCommands.Push(new Jump(Time.time, _rigidbody2D, jumpForce));
-        _playerCommands.Peek().Do();
 
-        if (!_isRecording) _playerCommands.Pop();
-        
-        Debug.Log("Pulou");
-    }
     public void RegisterMovement(InputAction.CallbackContext context)
     {
 
@@ -89,26 +62,26 @@ public class PlayerController : MonoBehaviour
             
         }
     }
-
-    private void FixedUpdate()
-    {
-        _rigidbody2D.AddForce(_moveDirection * (moveSpeed * Time.fixedDeltaTime));
-    }
-
-    public void SetMove(Vector2 move)
-    {
-        _moveDirection = move;
-    }
+    
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.tag == "Coin")
+        if (collision.gameObject.CompareTag("Coin"))
         {
-            
-            //collision.gameObject.GetComponent<Player>().IncreaseLife(valueHaelth);
+            _playerCommands.Push(new Move.ColetarMoeda(Time.time, collision.gameObject, this));
+            _playerCommands.Peek().Do();
             collision.gameObject.SetActive(false);
-            coin++;
         }
     }
+
+    public void ToGoBack()
+    {
+        if (_playerCommands.Count > 0)
+        {
+            _playerCommands.Pop().Undo();
+        }
+    }
+    
+    
 }
 
 public abstract class Command
@@ -122,50 +95,6 @@ public abstract class Command
     
     public abstract void Do();
     public abstract void Undo();
-}
-
-public class Jump : Command
-{
-    private Rigidbody2D _rigidbody2D;
-    private float jumpForce;
-    
-    public Jump(float time, Rigidbody2D _rb2D, float jump) : base(time)
-    {
-        _rigidbody2D = _rb2D;
-        jumpForce = jump;
-    }
-
-    public override void Do()
-    {
-        _rigidbody2D.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-    }
-
-    public override void Undo()
-    {
-        throw new System.NotImplementedException();
-    }
-}
-
-public class Movement : Command
-{
-    private Vector2 moveDirection;
-    private PlayerController playerController;
-    
-    public Movement(float time, Vector2 move, PlayerController player) : base(time)
-    {
-        moveDirection = move;
-        playerController = player;
-    }
-
-    public override void Do()
-    {
-        playerController.SetMove(moveDirection);
-    }
-
-    public override void Undo()
-    {
-        playerController.SetMove(moveDirection * -1);
-    }
 }
 
 public class Move : Command
@@ -188,23 +117,28 @@ public class Move : Command
     {
         transform.position -= direcao;
     }
-    public class Coin : Command
+    public class ColetarMoeda : Command
     {
-        private Collision collision;
-        public Coin(float time, Collision coll) : base(time)
+        private GameObject coin;
+        private PlayerController _player;
+        public ColetarMoeda(float time, GameObject moeda, PlayerController player) : base(time)
         {
-            collision = coll;
-            
+            coin = moeda;
+            _player = player;
+
         }
 
         public override void Do()
         {
-            collision.gameObject.SetActive(false);
+            _player.coin += 1;
+            coin.gameObject.SetActive(false);
         }
 
         public override void Undo()
         {
-            throw new NotImplementedException();
+            _player.coin -= 1;
+            _player.ToGoBack();
+            coin.gameObject.SetActive(true);
         }
     }
 }
