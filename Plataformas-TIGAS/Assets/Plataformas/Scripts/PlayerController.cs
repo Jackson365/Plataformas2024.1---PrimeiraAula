@@ -67,7 +67,7 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Coin"))
         {
-            _playerCommands.Push(new Move.ColetarMoeda(Time.time, collision.gameObject, this));
+            _playerCommands.Push(new ColetarMoeda(Time.time, collision.gameObject, this));
             _playerCommands.Peek().Do();
             collision.gameObject.SetActive(false);
         }
@@ -117,28 +117,30 @@ public class Move : Command
     {
         transform.position -= direcao;
     }
-    public class ColetarMoeda : Command
+   
+}
+
+public class ColetarMoeda : Command
+{
+    private GameObject coin;
+    private PlayerController _player;
+    public ColetarMoeda(float time, GameObject moeda, PlayerController player) : base(time)
     {
-        private GameObject coin;
-        private PlayerController _player;
-        public ColetarMoeda(float time, GameObject moeda, PlayerController player) : base(time)
-        {
-            coin = moeda;
-            _player = player;
+        coin = moeda;
+        _player = player;
 
-        }
+    }
 
-        public override void Do()
-        {
-            _player.coin += 1;
-            coin.gameObject.SetActive(false);
-        }
+    public override void Do()
+    {
+        _player.coin += 1;
+        coin.gameObject.SetActive(false);
+    }
 
-        public override void Undo()
-        {
-            _player.coin -= 1;
-            _player.ToGoBack();
-            coin.gameObject.SetActive(true);
-        }
+    public override void Undo()
+    {
+        _player.coin -= 1;
+        _player.ToGoBack();
+        coin.gameObject.SetActive(true);
     }
 }
